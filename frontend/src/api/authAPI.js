@@ -1,6 +1,11 @@
 import axios from 'axios';
 
-const API_BASE = 'http://localhost:4000/api/auth';
+
+const API_BASE = (import.meta.env.VITE_BACKEND_URL ) + "/api/auth";
+
+
+
+
 
 export const loginUser = async (credentials) => {
   const res = await axios.post(`${API_BASE}/login`, credentials);
@@ -40,4 +45,29 @@ export const getUserAddressesAPI = async (userId) => {
 export const updateUserAddressesAPI = async (userId, addresses) => {
   const res = await axios.put(`${API_BASE}/${userId}/addresses`, { addresses });
   return res.data;
+};
+
+// Add this to your existing authAPI.js file
+
+export const googleAuth = async (googleData) => {
+  try {
+    const response = await fetch(`${process.env.VITE_API_BASE_URL}/auth/google`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(googleData),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.msg || 'Google authentication failed');
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Google Auth API Error:', error);
+    throw error;
+  }
 };

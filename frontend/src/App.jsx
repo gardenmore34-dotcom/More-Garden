@@ -24,6 +24,7 @@ import AdminTestimonialPage from './pages/AdminTestimonialPage';
 import BulkProductPage from './pages/BulkProductPage';
 import BulkProduct from './pages/BulkProduct';
 
+
 export default function App() {
   useAutoLogout();
 
@@ -57,6 +58,7 @@ export default function App() {
       </Routes>
       <Toaster />
       <Footer />
+     
     </>
   );
 }

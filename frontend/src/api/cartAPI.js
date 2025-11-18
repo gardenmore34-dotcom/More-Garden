@@ -1,7 +1,8 @@
 // cartMerge.js
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:4000';
+const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || "http://localhost:4000");
+
 
 
 export const addToCartAPI = async (userId, product, quantity = 1, custom = {}) => {

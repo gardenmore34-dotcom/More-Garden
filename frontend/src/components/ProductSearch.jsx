@@ -29,25 +29,18 @@ const SearchBar = () => {
     handleSearch(value);
   };
 
-  // Click outside to navigate
+  // ✅ only close dropdown on outside click, not navigate
   useEffect(() => {
     const handleClickOutside = (e) => {
-      if (
-        wrapperRef.current &&
-        !wrapperRef.current.contains(e.target) &&
-        query &&
-        !clickedDropdown.current
-      ) {
-        navigate(`/search?query=${encodeURIComponent(query)}`);
-        setQuery('');
-        setResults([]);
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
+        setResults([]); // close dropdown
       }
       clickedDropdown.current = false;
     };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [query, navigate]);
+  }, []);
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && query.trim()) {
@@ -72,11 +65,11 @@ const SearchBar = () => {
         onChange={onChange}
         onKeyDown={handleKeyDown}
         placeholder="Search products..."
-        className="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+        className="w-full px-4 py-2 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-green-500 z-50"
       />
 
       {results.length > 0 && (
-        <ul className="absolute top-full left-0 right-0 bg-white border rounded-lg shadow-md z-10 mt-1 max-h-60 overflow-y-auto">
+        <ul className="absolute top-full left-0 right-0 bg-white border rounded-lg shadow-md z-[999] mt-1 max-h-60 overflow-y-auto">
           {results.map((product) => (
             <li
               key={product._id}

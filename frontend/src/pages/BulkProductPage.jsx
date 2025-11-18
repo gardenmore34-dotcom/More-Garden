@@ -2,11 +2,16 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { getProductBySlug } from "../api/productAPI";
+import ProductShowcase from "../components/ProductShowcase";
+import ProductReviews from "../components/ProductReview";
+import { getUserIdFromToken } from "../utils/authUtils";
+
 
 const BulkProductPage = () => {
   const { slug } = useParams();
   const [product, setProduct] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const userId = getUserIdFromToken();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -191,22 +196,20 @@ const BulkProductPage = () => {
         </div>
       </div>
 
+      <div className="mt-16">
+          <ProductShowcase 
+            title="You May Also Like" 
+            type="similar"
+            categorySlug={product?.category?.toLowerCase()}
+            productType={product?.type}
+            excludeProductId={product?._id}
+            limit={4}
+          />
+        </div>
+
       {/* Reviews Section */}
       <div className="max-w-6xl mx-auto px-4 py-10">
-        <h2 className="text-2xl font-bold mb-4">Customer Reviews</h2>
-        {product.reviews && product.reviews.length > 0 ? (
-          <div className="space-y-4">
-            {product.reviews.map((rev, idx) => (
-              <div key={idx} className="p-4 border rounded-lg bg-white">
-                <p className="font-semibold">{rev.user}</p>
-                <p className="text-yellow-500">⭐ {rev.rating}</p>
-                <p className="text-gray-600">{rev.comment}</p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500">No reviews yet.</p>
-        )}
+        <ProductReviews productId={product._id} userId={userId} />
       </div>
     </div>
   );

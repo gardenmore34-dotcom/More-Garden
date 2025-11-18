@@ -18,7 +18,7 @@ const ProfilePage = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
-  const userName = localStorage.getItem("userName") || "Guest"; 
+  const userName = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")).name : "Guest";
 
   useEffect(() => {
     const updateTime = () => {
@@ -49,16 +49,40 @@ const ProfilePage = () => {
   };
 
   const handleLogout = () => {
-    // ✅ Clear localStorage
-    localStorage.removeItem("token");
-    localStorage.removeItem("userName");
-    localStorage.removeItem("userData");
+    // ✅ Complete localStorage cleanup - Remove ALL user-related items
+    const userRelatedKeys = [
+      "token",
+      "user", 
+      "userName",
+      "userData",
+      "userId",        
+      "userInfo",
+      "authToken",
+      "refreshToken",
+      "userProfile"
+    ];
 
-    // ✅ Redirect to login or homepage
-    navigate("/"); 
+    // Remove all user-related localStorage items
+    userRelatedKeys.forEach(key => {
+      localStorage.removeItem(key);
+    });
+
+    // ✅ Also clear sessionStorage for complete cleanup
+    sessionStorage.clear();
+
+    // ✅ Force refresh and redirect to home page
+    window.location.href = "/";
   };
 
   const currentTabLabel = tabs.find(tab => tab.key === activeTab)?.label || 'Profile';
+
+  // Helper function for greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Morning';
+    if (hour < 18) return 'Afternoon';
+    return 'Evening';
+  };
 
   return (
     <div className="min-h-screen bg-[#F8FBF7]">
@@ -100,7 +124,7 @@ const ProfilePage = () => {
           {/* Logout Desktop */}
           <button 
             onClick={handleLogout} 
-            className="flex items-center gap-2 px-4 py-2 mt-6 text-sm bg-green-800 rounded-lg hover:bg-green-700 transition"
+            className="flex items-center gap-2 px-4 py-2 mt-6 text-sm bg-red-600 hover:bg-red-700 rounded-lg transition font-medium"
           >
             <FaSignOutAlt /> Log Out
           </button>
@@ -142,10 +166,6 @@ const ProfilePage = () => {
               )}
             </button>
           </div>
-
-          <div className="mt-4 bg-green-800 rounded-lg px-4 py-2">
-            <h2 className="text-base font-medium text-green-100">{currentTabLabel}</h2>
-          </div>
         </header>
 
         {/* Mobile Menu Overlay */}
@@ -174,7 +194,7 @@ const ProfilePage = () => {
                 </button>
               </div>
 
-              {/* Nav */}
+              {/* Navigation */}
               <div className="p-6">
                 <ul className="space-y-2">
                   {tabs.map(tab => (
@@ -195,7 +215,7 @@ const ProfilePage = () => {
                 </ul>
 
                 {/* Logout Mobile */}
-                <div className="border-t border-green-700 pt-6">
+                <div className="border-t border-green-700 pt-6 mt-6">
                   <button 
                     onClick={handleLogout} 
                     className="flex items-center gap-3 px-4 py-3 text-sm bg-red-600 hover:bg-red-700 rounded-xl transition-colors w-full font-medium"
@@ -221,14 +241,6 @@ const ProfilePage = () => {
       </div>
     </div>
   );
-};
-
-// Helper
-const getGreeting = () => {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Morning';
-  if (hour < 18) return 'Afternoon';
-  return 'Evening';
 };
 
 export default ProfilePage;

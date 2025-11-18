@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 
-const API_BASE_URL =  'http://localhost:4000/api/payment';
+const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || "http://localhost:4000") + "/api/payment";
 
 export const createOrder = async (amount) => {
   const res = await axios.post(`${API_BASE_URL}/create-order`, { amount });
@@ -24,7 +24,7 @@ export const verifyPayment = async ({ userId, orderId, amount, paymentData, cart
 };
 
 export const placeCODOrder = async ({ userId, cartItems, total }) => {
-  console.log('frontend [1] placeCODOrder called with:', { userId, cartItems, total });
+  
   
   const response = await axios.post(`${API_BASE_URL}/place-cod-order`, {
     userId,

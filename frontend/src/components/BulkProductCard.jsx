@@ -1,16 +1,25 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link} from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
+
 
 const BulkProductCard = ({ product }) => {
-  console.log("bulkcard", product);
+
+   const navigate = useNavigate();
 
   const discount =
     product.oldPrice && product.price
       ? Math.round(((product.oldPrice - product.price) / product.oldPrice) * 100)
       : null;
 
+  const handleCardClick = () => {
+    navigate(`/bulk/${product.slug}`);
+  };
+
   return (
-    <div className="bg-white shadow rounded-xl overflow-hidden hover:shadow-lg transition">
+    <div 
+    onClick={handleCardClick}
+    className="bg-white shadow rounded-xl overflow-hidden hover:shadow-lg transition">
       {/* Image */}
       <div className="relative">
         {discount && (

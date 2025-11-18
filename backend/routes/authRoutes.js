@@ -11,16 +11,21 @@ import {
   getUserAddresses,
   updateUserAddresses,
   getUserInfo,
+  googleAuth, // Add this import
 } from '../controllers/authController.js';
 import { isAdmin } from '../middleware/roleMiddleware.js';
 import verifyToken from '../middleware/authMiddleware.js';
 import { validate } from '../utils/validate.js';
-import { loginValidationRules , registerValidationRules } from '../validators/userValidator.js';
+import { loginValidationRules, registerValidationRules, googleAuthValidationRules } from '../validators/userValidator.js';
 
 const router = express.Router();
 
-router.post("/register",registerValidationRules,validate, registerUser);
-router.post("/login",loginValidationRules,validate, loginUser);
+// Add Google OAuth route
+router.post("/google", googleAuthValidationRules, validate, googleAuth);
+
+// Keep all your existing routes exactly the same
+router.post("/register", registerValidationRules, validate, registerUser);
+router.post("/login", loginValidationRules, validate, loginUser);
 router.post("/logout", logoutUser);
 router.get('/info/:id', getUserInfo);
 router.put('/:id/role', isAdmin, updateUserRole);

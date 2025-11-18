@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getAllCategories } from '../api/categoryApi';
+import { getAllCategories } from '../api/categoryAPI';
 import { useNavigate } from 'react-router-dom';
 
 const CategoryCardsSection = () => {

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:4000/api/review';
+const API_BASE_URL = (import.meta.env.VITE_BACKEND_URL || "http://localhost:4000") + "/api/review";
 
 export const createReview = async (reviewData) => {
   const res = await axios.post(`${API_BASE_URL}/create`, reviewData);

@@ -1,26 +1,44 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../utils/AuthContext';
-import { loginUser, registerUser } from '../api/authAPI';
+import { loginUser, registerUser, googleAuth } from '../api/authAPI'; // Add googleAuth here
 import { getUserIdFromToken } from '../utils/authUtils';
-
-import { Mail, Lock, User, Leaf, Loader2 } from 'lucide-react';
+import home0 from '../assets/Home0.png';
+import { Mail, Lock, User, Leaf, Loader2, AlertCircle } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from 'jwt-decode';
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [errors, setErrors] = useState({});
+  const [generalError, setGeneralError] = useState('');
   const { setIsLoggedIn, setUserInitial } = useAuth();
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
 
   const navigate = useNavigate();
   
   const handleChange = (e) => {
-    setFormData(prev => ({ ...prev, [e.target.name]: e.target.value }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    
+    // Clear specific field error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+    
+    // Clear general error when user makes changes
+    if (generalError) {
+      setGeneralError('');
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setErrors({});
+    setGeneralError('');
+    
     try {
       if (isLogin) {
         const data = await loginUser({ email: formData.email, password: formData.password });
@@ -37,23 +55,114 @@ const AuthPage = () => {
         await registerUser(formData);
         alert('✅ Registered successfully, please log in');
         setIsLogin(true);
+        setFormData({ name: '', email: '', password: '' });
       }
     } catch (err) {
-      alert('❌ ' + (err.response?.data?.message || err.message));
+      console.error('Auth error:', err);
+      
+      if (err.response?.status === 400 && err.response?.data) {
+        const errorData = err.response.data;
+        
+        // Handle validation errors
+        if (errorData.message === 'Validation failed' && errorData.errors) {
+          const fieldErrors = {};
+          errorData.errors.forEach(error => {
+            // Extract field name from error message or use a mapping
+            if (error.msg.includes('email')) {
+              fieldErrors.email = error.msg;
+            } else if (error.msg.includes('Password')) {
+              fieldErrors.password = error.msg;
+            } else if (error.msg.includes('Name')) {
+              fieldErrors.name = error.msg;
+            } else {
+              // If we can't determine the field, show as general error
+              setGeneralError(error.msg);
+            }
+          });
+          setErrors(fieldErrors);
+        } else {
+          // Handle other 400 errors
+          setGeneralError(errorData.message || 'Validation failed');
+        }
+      } else if (err.response?.data?.message) {
+        // Handle other API errors
+        setGeneralError(err.response.data.message);
+      } else {
+        // Handle network or other errors
+        setGeneralError(err.message || 'An error occurred. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleLogin = () => {
-    alert('🌐 Google Login clicked — integrate your OAuth logic here!');
+  const handleGoogleSuccess = async (credentialResponse) => {
+  try {
+    setLoading(true);
+    setErrors({});
+    setGeneralError('');
+
+    // Decode the JWT token from Google
+    const decoded = jwtDecode(credentialResponse.credential);
+    
+    console.log('Google user data:', decoded);
+
+    // Prepare data for API
+    const googleData = {
+      email: decoded.email,
+      name: decoded.name,
+      picture: decoded.picture,
+      googleId: decoded.sub,
+      credential: credentialResponse.credential,
+    };
+
+    // Call your API function
+    const data = await googleAuth(googleData);
+
+    // Store user data (matching your existing format)
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    localStorage.setItem('userId', data.user.id);
+
+    setIsLoggedIn(true);
+    setUserInitial(data.user.name.charAt(0).toUpperCase());
+
+    alert('✅ Google login successful!');
+    navigate('/');
+
+  } catch (error) {
+    console.error('Google login error:', error);
+    setGeneralError(error.message || 'Something went wrong with Google login. Please try again.');
+  } finally {
+    setLoading(false);
+  }
+};
+
+const handleGoogleError = () => {
+  console.error('Google login failed');
+  setGeneralError('Google login failed. Please try again.');
+};
+
+
+  const toggleAuthMode = () => {
+    setIsLogin(!isLogin);
+    setErrors({});
+    setGeneralError('');
+    setFormData({ name: '', email: '', password: '' });
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-100 via-[#F0FDF4] to-green-200 px-4">
       <div className="bg-white shadow-xl rounded-3xl overflow-hidden flex flex-col md:flex-row max-w-5xl w-full transition-all duration-300">
-        {/* Left Hero Image */}
-        <div className="hidden md:block md:w-1/2 bg-cover bg-center bg-[url('https://images.unsplash.com/photo-1616627986376-25b3be7a5c7d?auto=format&fit=crop&w=800&q=80')]"></div>
+        {/* Left Hero Image - Updated to use home0 */}
+        <div className="hidden md:block md:w-1/2 relative">
+          <img 
+            src={home0} 
+            alt="Garden Home" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-green-600 bg-opacity-20"></div>
+        </div>
 
         {/* Right Form */}
         <div className="w-full md:w-1/2 p-8 md:p-10 flex flex-col justify-center">
@@ -67,6 +176,14 @@ const AuthPage = () => {
             </p>
           </div>
 
+          {/* General Error Message */}
+          {generalError && (
+            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center text-red-700">
+              <AlertCircle size={16} className="mr-2 flex-shrink-0" />
+              <span className="text-sm">{generalError}</span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             {!isLogin && (
               <div className="relative">
@@ -77,9 +194,19 @@ const AuthPage = () => {
                   placeholder="Full Name"
                   value={formData.name}
                   onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
+                  className={`w-full pl-10 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 transition-colors ${
+                    errors.name 
+                      ? 'border-red-300 focus:ring-red-400 bg-red-50' 
+                      : 'border-gray-300 focus:ring-green-400'
+                  }`}
                   required
                 />
+                {errors.name && (
+                  <p className="mt-1 text-sm text-red-600 flex items-center">
+                    <AlertCircle size={14} className="mr-1" />
+                    {errors.name}
+                  </p>
+                )}
               </div>
             )}
 
@@ -91,9 +218,19 @@ const AuthPage = () => {
                 placeholder="Email Address"
                 value={formData.email}
                 onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
+                className={`w-full pl-10 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 transition-colors ${
+                  errors.email 
+                    ? 'border-red-300 focus:ring-red-400 bg-red-50' 
+                    : 'border-gray-300 focus:ring-green-400'
+                }`}
                 required
               />
+              {errors.email && (
+                <p className="mt-1 text-sm text-red-600 flex items-center">
+                  <AlertCircle size={14} className="mr-1" />
+                  {errors.email}
+                </p>
+              )}
             </div>
 
             <div className="relative">
@@ -104,18 +241,31 @@ const AuthPage = () => {
                 placeholder="Password"
                 value={formData.password}
                 onChange={handleChange}
-                className="w-full pl-10 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-green-400"
+                className={`w-full pl-10 pr-4 py-2 border rounded-xl focus:outline-none focus:ring-2 transition-colors ${
+                  errors.password 
+                    ? 'border-red-300 focus:ring-red-400 bg-red-50' 
+                    : 'border-gray-300 focus:ring-green-400'
+                }`}
                 required
               />
+              {errors.password && (
+                <p className="mt-1 text-sm text-red-600 flex items-center">
+                  <AlertCircle size={14} className="mr-1" />
+                  {errors.password}
+                </p>
+              )}
             </div>
 
             <button
               type="submit"
-              className="w-full py-2 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center"
+              className="w-full py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-xl transition-all flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
               {loading ? (
-                <Loader2 className="animate-spin mr-2" size={18} />
+                <>
+                  <Loader2 className="animate-spin mr-2" size={18} />
+                  {isLogin ? 'Logging in...' : 'Registering...'}
+                </>
               ) : (
                 isLogin ? 'Login' : 'Register'
               )}
@@ -123,25 +273,29 @@ const AuthPage = () => {
           </form>
 
           <div className="mt-5">
-            <p className="text-center text-sm text-gray-500 mb-3">Or continue with</p>
-            <button
-              onClick={handleGoogleLogin}
-              className="w-full flex items-center justify-center border border-gray-300 rounded-xl py-2 hover:bg-gray-100 transition"
-            >
-              <img
-                src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg"
-                alt="Google"
-                className="w-5 h-5 mr-2"
-              />
-              Continue with Google
-            </button>
-          </div>
+  <p className="text-center text-sm text-gray-500 mb-3">Or continue with</p>
+  <div className="w-full">
+    <GoogleLogin
+      onSuccess={handleGoogleSuccess}
+      onError={handleGoogleError}
+      useOneTap={false}
+      theme="outline"
+      size="large"
+      text="signin_with"
+      shape="rectangular"
+      width="100%"
+      disabled={loading}
+    />
+  </div>
+</div>
+
 
           <p className="text-sm text-center mt-6 text-gray-600">
             {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
             <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-green-700 hover:underline font-medium transition"
+              onClick={toggleAuthMode}
+              className="text-green-700 hover:underline font-medium transition disabled:opacity-50"
+              disabled={loading}
             >
               {isLogin ? 'Register' : 'Login'}
             </button>

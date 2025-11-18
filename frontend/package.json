@@ -20,6 +20,7 @@
     "@tailwindcss/line-clamp": "^0.4.4",
     "axios": "^1.7.9",
     "cloudinary": "^2.6.1",
+    "dotenv": "^17.2.1",
     "framer-motion": "^12.18.1",
     "json-server": "^1.0.0-beta.3",
     "jwt-decode": "^4.0.0",

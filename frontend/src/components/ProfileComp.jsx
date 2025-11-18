@@ -14,6 +14,7 @@ export const ProfileInfo = () => {
       getUserInfo(userId)
         .then(data => {
           setUser(data);
+          localStorage.setItem('user', JSON.stringify(data));
           console.log('User info fetched:', data);
         })
         .catch(err => console.error('Error fetching user info:', err));

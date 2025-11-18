@@ -1,37 +1,54 @@
 import { useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { Star } from 'lucide-react'; // or use your own icon set
-import {createReview} from '../api/reviewAPI'; // Adjust the import path as needed
+import { Star } from 'lucide-react';
+import { createReview } from '../api/reviewAPI'; // Adjust the import path
 
 const WriteReviewForm = ({ productId, userId }) => {
   const [showForm, setShowForm] = useState(false);
-  
+
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
   const [title, setTitle] = useState('');
   const [comment, setComment] = useState('');
+  const [errors, setErrors] = useState({});
+
+  const validate = () => {
+    const newErrors = {};
+    if (rating === 0) newErrors.rating = 'Please select a rating';
+    if (!title.trim()) newErrors.title = 'Title is required';
+    if (!comment.trim()) newErrors.comment = 'Comment is required';
+    return newErrors;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try{
-        const reviewData = {
-          rating,
-          title,
-          comment,
-          productId,
-          userId,
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors);
+      return;
+    }
 
-        };
-        console.log(reviewData);
+    try {
+      const reviewData = {
+        rating,
+        title,
+        comment,
+        productId,
+        userId,
+      };
 
-        const response =  await createReview(reviewData);
-        // Reset form fields
-        setRating(0);
-        setTitle('');
-        setComment('');
-      } catch (error) {
-        console.error('Error submitting review:', error);
-      }
+      console.log(reviewData);
+
+      const response = await createReview(reviewData);
+
+      // Reset form
+      setRating(0);
+      setTitle('');
+      setComment('');
+      setErrors({});
+      setShowForm(false);
+    } catch (error) {
+      console.error('Error submitting review:', error);
+    }
   };
 
   return (
@@ -44,7 +61,10 @@ const WriteReviewForm = ({ productId, userId }) => {
       </button>
 
       {showForm && (
-        <form onSubmit={handleSubmit} className="mt-6 animate-fade-in flex flex-col gap-4">
+        <form
+          onSubmit={handleSubmit}
+          className="mt-6 animate-fade-in flex flex-col gap-4"
+        >
           {/* Rating Stars */}
           <div className="text-center">
             <p className="font-medium mb-2">Rating</p>
@@ -59,30 +79,45 @@ const WriteReviewForm = ({ productId, userId }) => {
                     onMouseEnter={() => setHover(starVal)}
                     onMouseLeave={() => setHover(0)}
                     className={`cursor-pointer transition ${
-                      (hover || rating) >= starVal ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'
+                      (hover || rating) >= starVal
+                        ? 'text-yellow-500 fill-yellow-500'
+                        : 'text-gray-300'
                     }`}
                   />
                 );
               })}
             </div>
+            {errors.rating && (
+              <p className="text-red-500 text-sm mt-1">{errors.rating}</p>
+            )}
           </div>
 
           {/* Title */}
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Give your review a title"
-            className="border px-4 py-2 rounded-md shadow-sm w-full focus:ring-green-500 focus:outline-none"
-          />
+          <div>
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Give your review a title"
+              className="border px-4 py-2 rounded-md shadow-sm w-full focus:ring-green-500 focus:outline-none"
+            />
+            {errors.title && (
+              <p className="text-red-500 text-sm mt-1">{errors.title}</p>
+            )}
+          </div>
 
           {/* Comment */}
-          <textarea
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            placeholder="Write your comments here"
-            className="border px-4 py-2 rounded-md shadow-sm w-full min-h-[100px] focus:ring-green-500 focus:outline-none"
-          />
+          <div>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="Write your comments here"
+              className="border px-4 py-2 rounded-md shadow-sm w-full min-h-[100px] focus:ring-green-500 focus:outline-none"
+            />
+            {errors.comment && (
+              <p className="text-red-500 text-sm mt-1">{errors.comment}</p>
+            )}
+          </div>
 
           {/* Submit Button */}
           <div className="text-right">

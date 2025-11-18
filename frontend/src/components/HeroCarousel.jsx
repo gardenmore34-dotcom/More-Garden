@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 import home0 from '../assets/Home0.png';
 import home3 from '../assets/Home0desk.png';
@@ -108,23 +109,22 @@ const HeroCarousel = () => {
         ))}
       </div>
 
-      {/* Arrows */}
-      {images.length > 1 && (
-        <>
-          <button
-            onClick={handlePrev}
-            className="absolute left-4 top-1/2 -translate-y-1/2 text-white text-3xl bg-black bg-opacity-40 rounded-full p-2 hover:bg-opacity-70"
-          >
-            ‹
-          </button>
-          <button
-            onClick={handleNext}
-            className="absolute right-4 top-1/2 -translate-y-1/2 text-white text-3xl bg-black bg-opacity-40 rounded-full p-2 hover:bg-opacity-70"
-          >
-            ›
-          </button>
-        </>
-      )}
+   {images.length > 1 && (
+  <>
+    <button
+      onClick={handlePrev}
+      className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white bg-black bg-opacity-40 rounded-full hover:bg-opacity-70 transition-all duration-200"
+    >
+      <ChevronLeft className="w-5 h-5" />
+    </button>
+    <button
+      onClick={handleNext}
+      className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center text-white bg-black bg-opacity-40 rounded-full hover:bg-opacity-70 transition-all duration-200"
+    >
+      <ChevronRight className="w-5 h-5" />
+    </button>
+  </>
+)}
 
       {/* Dots */}
       {images.length > 1 && (

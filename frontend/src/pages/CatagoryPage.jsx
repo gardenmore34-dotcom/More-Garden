@@ -12,6 +12,8 @@ const CategoryPage = () => {
   const [sortOrder, setSortOrder] = useState('');
   const [priceRange, setPriceRange] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const productsPerPage = 20;
 
   const totalPages = Math.ceil(filteredProducts.length / productsPerPage);
@@ -27,6 +29,9 @@ const CategoryPage = () => {
 
   useEffect(() => {
     const fetchProducts = async () => {
+      setIsLoading(true);
+      setError(null);
+      
       try {
         let res;
         if (category) {
@@ -46,8 +51,11 @@ const CategoryPage = () => {
         }
       } catch (error) {
         console.error('Error fetching products:', error);
+        setError('Failed to load products. Please try again.');
         setProducts([]);
         setFilteredProducts([]);
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchProducts();
@@ -107,11 +115,72 @@ const CategoryPage = () => {
     return 'All Products';
   };
 
+  // Loading Skeleton Component
+  const ProductSkeleton = () => (
+    <div className="bg-white rounded-lg shadow-md overflow-hidden animate-pulse">
+      <div className="h-48 bg-gray-200"></div>
+      <div className="p-4">
+        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+        <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+        <div className="h-6 bg-gray-200 rounded w-1/4"></div>
+      </div>
+    </div>
+  );
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <>
+        <SEO title={getTitle()} description={getDescription()} />
+        <div className="min-h-screen bg-[#F3F9F3] md:px-12 pb-6 md:py-6 md:pb-8">
+          {/* Filter Section Skeleton */}
+          <div className="mb-6 bg-white shadow rounded-xl p-3 md:p-6 animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/2 mb-4"></div>
+            <div className="flex flex-wrap gap-2 md:gap-4">
+              <div className="h-10 bg-gray-200 rounded w-32"></div>
+              <div className="h-10 bg-gray-200 rounded w-32"></div>
+              <div className="h-10 bg-gray-200 rounded w-32"></div>
+            </div>
+          </div>
+
+          {/* Product Grid Skeleton */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+            {[...Array(8)].map((_, index) => (
+              <ProductSkeleton key={index} />
+            ))}
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <>
+        <SEO title={getTitle()} description={getDescription()} />
+        <div className="min-h-screen bg-[#F3F9F3] md:px-12 pb-6 md:py-6 md:pb-8">
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="text-red-500 text-6xl mb-4">⚠️</div>
+            <h2 className="text-xl md:text-2xl font-bold text-gray-800 mb-2">Oops! Something went wrong</h2>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <SEO title={getTitle()} description={getDescription()} />
 
-      <div className="min-h-screen bg-[#F3F9F3] md:px-12 py-6 md:py-8">
+      <div className="min-h-screen bg-[#F3F9F3] md:px-12 pb-6 md:py-6 md:pb-8">
         {/* Filter Section */}
         <div className="mb-6 bg-white shadow rounded-xl p-3 md:p-6">
           <h1 className="text-lg md:text-2xl font-bold text-green-800 mb-3 md:mb-4">
@@ -168,6 +237,7 @@ const CategoryPage = () => {
             ))
           ) : (
             <div className="col-span-full text-center py-12">
+              <div className="text-gray-400 text-6xl mb-4">🌱</div>
               <p className="text-gray-500 text-base md:text-lg">
                 No products found for this {type ? 'type' : 'category'}.
               </p>
